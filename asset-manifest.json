@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/HelixGameEngine/LeetCode/static/css/main.11eef527.css",
-    "main.js": "/HelixGameEngine/LeetCode/static/js/main.80b1b6d2.js",
-    "static/js/453.6e2f83e5.chunk.js": "/HelixGameEngine/LeetCode/static/js/453.6e2f83e5.chunk.js",
-    "index.html": "/HelixGameEngine/LeetCode/index.html",
-    "main.11eef527.css.map": "/HelixGameEngine/LeetCode/static/css/main.11eef527.css.map",
-    "main.80b1b6d2.js.map": "/HelixGameEngine/LeetCode/static/js/main.80b1b6d2.js.map",
-    "453.6e2f83e5.chunk.js.map": "/HelixGameEngine/LeetCode/static/js/453.6e2f83e5.chunk.js.map"
+    "main.css": "/LeetCode/static/css/main.11eef527.css",
+    "main.js": "/LeetCode/static/js/main.712e40f3.js",
+    "static/js/453.6e2f83e5.chunk.js": "/LeetCode/static/js/453.6e2f83e5.chunk.js",
+    "index.html": "/LeetCode/index.html",
+    "main.11eef527.css.map": "/LeetCode/static/css/main.11eef527.css.map",
+    "main.712e40f3.js.map": "/LeetCode/static/js/main.712e40f3.js.map",
+    "453.6e2f83e5.chunk.js.map": "/LeetCode/static/js/453.6e2f83e5.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.11eef527.css",
-    "static/js/main.80b1b6d2.js"
+    "static/js/main.712e40f3.js"
   ]
 }
