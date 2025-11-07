@@ -347,6 +347,8 @@ export default function LeetCodeTracker() {
   const [isConnected, setIsConnected] = useState(() => gistStorage.isConnected());
   const [githubToken, setGithubToken] = useState('');
   const [syncStatus, setSyncStatus] = useState('');
+  const [showGistSync, setShowGistSync] = useState(false);
+  const [gistIdInput, setGistIdInput] = useState('');
 
   const addCategory = () => {
     if (!newCategoryName.trim()) return;
@@ -589,6 +591,29 @@ export default function LeetCodeTracker() {
     setTimeout(() => setSyncStatus(''), 3000);
   };
 
+  const setGistId = () => {
+    if (!gistIdInput.trim()) {
+      alert('Please enter a gist ID');
+      return;
+    }
+    gistStorage.setGistId(gistIdInput.trim());
+    setGistIdInput('');
+    setShowGistSync(false);
+    setSyncStatus('Gist ID set for syncing');
+    setTimeout(() => setSyncStatus(''), 3000);
+  };
+
+  const getCurrentGistId = () => {
+    const currentId = gistStorage.getCurrentGistId();
+    if (currentId) {
+      navigator.clipboard.writeText(currentId);
+      setSyncStatus('Gist ID copied to clipboard');
+    } else {
+      setSyncStatus('No gist ID found - save data first');
+    }
+    setTimeout(() => setSyncStatus(''), 3000);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-2 sm:p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
@@ -630,6 +655,13 @@ export default function LeetCodeTracker() {
                     Load
                   </button>
                   <button
+                    onClick={() => setShowGistSync(!showGistSync)}
+                    className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                    title="Sync across devices"
+                  >
+                    Sync
+                  </button>
+                  <button
                     onClick={disconnectGitHub}
                     className="px-2 py-2 text-gray-600 hover:text-gray-800 text-sm"
                     title="Disconnect GitHub"
@@ -654,6 +686,44 @@ export default function LeetCodeTracker() {
               </div>
             </div>
           </div>
+
+          {/* Gist Sync Panel */}
+          {showGistSync && isConnected && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <h3 className="text-lg font-medium text-blue-900 mb-3">Sync Across Devices</h3>
+              <div className="space-y-3">
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="text"
+                    value={gistIdInput}
+                    onChange={(e) => setGistIdInput(e.target.value)}
+                    placeholder="Enter Gist ID to sync with existing data"
+                    className="px-3 py-2 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm flex-1"
+                  />
+                  <button
+                    onClick={setGistId}
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                  >
+                    Set Gist ID
+                  </button>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2 items-start">
+                  <button
+                    onClick={getCurrentGistId}
+                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+                  >
+                    Copy Current Gist ID
+                  </button>
+                  <div className="text-sm text-blue-700">
+                    <p><strong>To sync across devices:</strong></p>
+                    <p>1. Save your data on the first device</p>
+                    <p>2. Click "Copy Current Gist ID" and share it</p>
+                    <p>3. On other devices, paste the Gist ID and click "Set Gist ID"</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-3 mb-4 md:mb-6">
             {!isAddingCategory ? (

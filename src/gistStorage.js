@@ -15,6 +15,42 @@ class GistStorage {
     localStorage.setItem('github-token', token);
   }
 
+  // Set gist ID manually (for syncing across devices)
+  setGistId(gistId) {
+    this.gistId = gistId;
+    localStorage.setItem('gist-id', gistId);
+  }
+
+  // List user's gists to find existing LeetCode tracker gists
+  async listGists() {
+    if (!this.token) throw new Error('GitHub token required');
+
+    const authHeader = this.token.startsWith('github_pat_')
+      ? `Bearer ${this.token}`
+      : `token ${this.token}`;
+
+    const response = await fetch('https://api.github.com/gists?per_page=100', {
+      headers: {
+        'Authorization': authHeader
+      }
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      let body;
+      try { body = JSON.parse(text); } catch { body = text; }
+      const message = body && body.message ? body.message : text || response.statusText;
+      throw new Error(`List gists failed: ${response.status} ${response.statusText} - ${message}`);
+    }
+
+    const gists = await response.json();
+    // Filter for LeetCode tracker gists
+    return gists.filter(gist =>
+      gist.description === GIST_CONFIG.DESCRIPTION &&
+      gist.files[GIST_CONFIG.FILENAME]
+    );
+  }
+
   async createGist(data) {
     if (!this.token) throw new Error('GitHub token required');
 
@@ -124,6 +160,24 @@ class GistStorage {
 
   async saveData(data) {
     try {
+      // If no gist ID, try to find existing LeetCode tracker gists
+      if (!this.gistId) {
+        try {
+          const existingGists = await this.listGists();
+          if (existingGists.length > 0) {
+            // Use the most recent LeetCode tracker gist
+            const mostRecent = existingGists.sort((a, b) =>
+              new Date(b.updated_at) - new Date(a.updated_at)
+            )[0];
+            this.gistId = mostRecent.id;
+            localStorage.setItem('gist-id', mostRecent.id);
+            console.log(`Found existing LeetCode tracker gist: ${mostRecent.id}`);
+          }
+        } catch (error) {
+          console.warn('Could not search for existing gists:', error.message);
+        }
+      }
+
       if (this.gistId) {
         try {
           return await this.updateGist(data);
@@ -164,6 +218,10 @@ class GistStorage {
 
   isConnected() {
     return !!this.token;
+  }
+
+  getCurrentGistId() {
+    return this.gistId;
   }
 }
 
