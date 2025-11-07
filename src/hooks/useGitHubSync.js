@@ -12,6 +12,8 @@ export const useGitHubSync = () => {
   const [syncStatus, setSyncStatus] = useState('');
   const [showGistSync, setShowGistSync] = useState(false);
   const [gistIdInput, setGistIdInput] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const connectGitHub = () => {
     if (!githubToken.trim()) {
@@ -33,6 +35,7 @@ export const useGitHubSync = () => {
     }
 
     try {
+      setIsSaving(true);
       setSyncStatus('Saving...');
       await gistStorage.saveData(data);
       setSyncStatus('Saved to GitHub');
@@ -40,6 +43,8 @@ export const useGitHubSync = () => {
     } catch (error) {
       setSyncStatus(`Error: ${error.message}`);
       setTimeout(() => setSyncStatus(''), 5000);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -50,6 +55,7 @@ export const useGitHubSync = () => {
     }
 
     try {
+      setIsLoading(true);
       setSyncStatus('Loading...');
       const data = await gistStorage.loadData();
       if (data) {
@@ -63,6 +69,8 @@ export const useGitHubSync = () => {
       setSyncStatus(`Error: ${error.message}`);
       setTimeout(() => setSyncStatus(''), 5000);
       return null;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -126,6 +134,8 @@ export const useGitHubSync = () => {
     loadFromGist,
     disconnectGitHub,
     setGistId,
-    getCurrentGistId
+    getCurrentGistId,
+    isSaving,
+    isLoading
   };
 };

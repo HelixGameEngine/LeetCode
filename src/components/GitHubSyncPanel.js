@@ -1,5 +1,5 @@
 import React from 'react';
-import { Cloud } from 'lucide-react';
+import { Cloud, Loader2 } from 'lucide-react';
 
 const GitHubSyncPanel = ({
   isConnected,
@@ -18,7 +18,9 @@ const GitHubSyncPanel = ({
     loadFromGist,
     disconnectGitHub,
     setGistId,
-    getCurrentGistId
+    getCurrentGistId,
+    isSaving,
+    isLoading
   } = githubSync;
 
   return (
@@ -46,16 +48,40 @@ const GitHubSyncPanel = ({
           <div className="flex flex-wrap gap-2 items-center justify-center sm:justify-start">
             <button
               onClick={onSaveToGist || githubSync.saveToGist}
-              className="flex items-center gap-1 px-3 py-2 bg-gray-800 text-white rounded hover:bg-gray-900 text-sm"
+              disabled={isSaving}
+              className={`flex items-center gap-1 px-3 py-2 text-white rounded text-sm ${isSaving
+                  ? 'bg-gray-600 cursor-not-allowed'
+                  : 'bg-gray-800 hover:bg-gray-900'
+                }`}
             >
-              <Cloud size={16} />
-              Save to GitHub
+              {isSaving ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Cloud size={16} />
+                  Save to GitHub
+                </>
+              )}
             </button>
             <button
               onClick={loadFromGist}
-              className="px-3 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 text-sm"
+              disabled={isLoading}
+              className={`flex items-center gap-1 px-3 py-2 text-white rounded text-sm ${isLoading
+                  ? 'bg-gray-500 cursor-not-allowed'
+                  : 'bg-gray-600 hover:bg-gray-700'
+                }`}
             >
-              Load
+              {isLoading ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                'Load'
+              )}
             </button>
             <button
               onClick={() => setShowGistSync(!showGistSync)}
@@ -73,8 +99,10 @@ const GitHubSyncPanel = ({
             </button>
           </div>
         )}
-        {syncStatus && (
-          <span className="text-sm text-gray-600 font-medium text-center">{syncStatus}</span>
+        {syncStatus && !isSaving && !isLoading && (
+          <div className="fixed top-4 right-4 z-50 bg-gray-800 text-white px-3 py-2 rounded shadow-lg text-sm">
+            {syncStatus}
+          </div>
         )}
       </div>
 
