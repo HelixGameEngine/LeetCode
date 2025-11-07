@@ -591,16 +591,32 @@ export default function LeetCodeTracker() {
     setTimeout(() => setSyncStatus(''), 3000);
   };
 
-  const setGistId = () => {
+  const setGistId = async () => {
     if (!gistIdInput.trim()) {
       alert('Please enter a gist ID');
       return;
     }
-    gistStorage.setGistId(gistIdInput.trim());
-    setGistIdInput('');
-    setShowGistSync(false);
-    setSyncStatus('Gist ID set for syncing');
-    setTimeout(() => setSyncStatus(''), 3000);
+
+    try {
+      setSyncStatus('Setting gist ID and loading data...');
+      gistStorage.setGistId(gistIdInput.trim());
+      setGistIdInput('');
+      setShowGistSync(false);
+
+      // Automatically load data from the newly set gist
+      const data = await gistStorage.loadData();
+      if (data) {
+        setCategories(data.categories || []);
+        setCollapsedCategories(data.collapsedCategories || []);
+        setSyncStatus('Gist ID set and data loaded successfully!');
+      } else {
+        setSyncStatus('Gist ID set, but no data found in gist');
+      }
+    } catch (error) {
+      setSyncStatus(`Error loading from gist: ${error.message}`);
+    }
+
+    setTimeout(() => setSyncStatus(''), 5000);
   };
 
   const getCurrentGistId = () => {

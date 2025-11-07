@@ -133,6 +133,8 @@ class GistStorage {
   async loadGist() {
     if (!this.gistId) throw new Error('No gist ID found');
 
+    console.log(`Loading gist with ID: ${this.gistId}`);
+
     // Support both classic (ghp_) and fine-grained (github_pat_) tokens
     const authHeader = this.token && this.token.startsWith('github_pat_')
       ? `Bearer ${this.token}`
@@ -147,6 +149,7 @@ class GistStorage {
       let body;
       try { body = JSON.parse(text); } catch { body = text; }
       const message = body && body.message ? body.message : text || response.statusText;
+      console.error(`Failed to load gist ${this.gistId}:`, { status: response.status, message, body });
       const err = new Error(`Load gist failed: ${response.status} ${response.statusText} - ${message}`);
       err.status = response.status;
       err.body = body;
@@ -154,7 +157,12 @@ class GistStorage {
     }
 
     const gist = await response.json();
+    console.log('Loaded gist:', gist);
     const content = gist.files[GIST_CONFIG.FILENAME]?.content;
+    if (!content) {
+      console.warn(`No content found in gist file: ${GIST_CONFIG.FILENAME}`);
+      console.log('Available files:', Object.keys(gist.files || {}));
+    }
     return content ? JSON.parse(content) : null;
   }
 
