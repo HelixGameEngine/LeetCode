@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { Plus, Trash2, Edit2, Check, X, Download, Upload, FolderPlus, ExternalLink, CheckCircle, Circle, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, Edit2, Check, X, Download, Upload, FolderPlus, ExternalLink, CheckCircle, Circle, ChevronDown, ChevronRight, Cloud } from 'lucide-react';
+import GistStorage from './gistStorage';
 
 const STORAGE_KEYS = {
   CATEGORIES: 'leetcode-tracker',
@@ -34,6 +35,12 @@ export default function LeetCodeTracker() {
   const [editingCategory, setEditingCategory] = useState(null);
   const [editingProblem, setEditingProblem] = useState(null);
   const [newProblem, setNewProblem] = useState(INITIAL_PROBLEM);
+
+  // GitHub Gist integration
+  const [gistStorage] = useState(() => new GistStorage());
+  const [isConnected, setIsConnected] = useState(() => gistStorage.isConnected());
+  const [githubToken, setGithubToken] = useState('');
+  const [syncStatus, setSyncStatus] = useState('');
 
   const addCategory = () => {
     if (!newCategoryName.trim()) return;
@@ -172,13 +179,119 @@ export default function LeetCodeTracker() {
     setCollapsedCategories(newCollapsed);
   };
 
+  // GitHub Gist functions
+  const connectGitHub = () => {
+    if (!githubToken.trim()) {
+      alert('Please enter a GitHub token');
+      return;
+    }
+
+    gistStorage.setToken(githubToken.trim());
+    setIsConnected(true);
+    setGithubToken('');
+    setSyncStatus('Connected to GitHub');
+    setTimeout(() => setSyncStatus(''), 3000);
+  };
+
+  const saveToGist = async () => {
+    if (!isConnected) {
+      alert('Please connect to GitHub first');
+      return;
+    }
+
+    try {
+      setSyncStatus('Saving...');
+      await gistStorage.saveData({ categories, collapsedCategories });
+      setSyncStatus('Saved to GitHub');
+      setTimeout(() => setSyncStatus(''), 3000);
+    } catch (error) {
+      setSyncStatus(`Error: ${error.message}`);
+      setTimeout(() => setSyncStatus(''), 5000);
+    }
+  };
+
+  const loadFromGist = async () => {
+    if (!isConnected) {
+      alert('Please connect to GitHub first');
+      return;
+    }
+
+    try {
+      setSyncStatus('Loading...');
+      const data = await gistStorage.loadData();
+      if (data) {
+        setCategories(data.categories || []);
+        setCollapsedCategories(data.collapsedCategories || []);
+        setSyncStatus('Loaded from GitHub');
+      } else {
+        setSyncStatus('No data found');
+      }
+      setTimeout(() => setSyncStatus(''), 3000);
+    } catch (error) {
+      setSyncStatus(`Error: ${error.message}`);
+      setTimeout(() => setSyncStatus(''), 5000);
+    }
+  };
+
+  const disconnectGitHub = () => {
+    gistStorage.disconnect();
+    setIsConnected(false);
+    setSyncStatus('Disconnected');
+    setTimeout(() => setSyncStatus(''), 3000);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-6xl mx-auto">
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold text-gray-800">LeetCode Problem Tracker</h1>
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center flex-wrap">
+              {!isConnected ? (
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="password"
+                    value={githubToken}
+                    onChange={(e) => setGithubToken(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && connectGitHub()}
+                    placeholder="GitHub Personal Access Token"
+                    className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                  <button
+                    onClick={connectGitHub}
+                    className="flex items-center gap-1 px-3 py-2 bg-gray-800 text-white rounded hover:bg-gray-900 text-sm"
+                  >
+                    <Cloud size={16} />
+                    Connect
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2 items-center">
+                  <button
+                    onClick={saveToGist}
+                    className="flex items-center gap-1 px-3 py-2 bg-gray-800 text-white rounded hover:bg-gray-900 text-sm"
+                  >
+                    <Cloud size={16} />
+                    Save to GitHub
+                  </button>
+                  <button
+                    onClick={loadFromGist}
+                    className="px-3 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 text-sm"
+                  >
+                    Load
+                  </button>
+                  <button
+                    onClick={disconnectGitHub}
+                    className="px-2 py-2 text-gray-600 hover:text-gray-800 text-sm"
+                    title="Disconnect GitHub"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+              {syncStatus && (
+                <span className="text-sm text-gray-600 font-medium">{syncStatus}</span>
+              )}
               <button onClick={exportData} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                 <Download size={18} />
                 Export
