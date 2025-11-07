@@ -11,12 +11,18 @@ class GistStorage {
 
   // Safe token setup - user enters their own token
   setToken(token) {
+    if (!token || typeof token !== 'string') {
+      throw new Error('Invalid token provided');
+    }
     this.token = token;
     localStorage.setItem('github-token', token);
   }
 
   // Set gist ID manually (for syncing across devices)
   setGistId(gistId) {
+    if (!gistId || typeof gistId !== 'string') {
+      throw new Error('Invalid gist ID provided');
+    }
     this.gistId = gistId;
     localStorage.setItem('gist-id', gistId);
   }
