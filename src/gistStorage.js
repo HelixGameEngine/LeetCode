@@ -18,10 +18,15 @@ class GistStorage {
   async createGist(data) {
     if (!this.token) throw new Error('GitHub token required');
 
+    // Support both classic (ghp_) and fine-grained (github_pat_) tokens
+    const authHeader = this.token.startsWith('github_pat_')
+      ? `Bearer ${this.token}`
+      : `token ${this.token}`;
+
     const response = await fetch('https://api.github.com/gists', {
       method: 'POST',
       headers: {
-        'Authorization': `token ${this.token}`,
+        'Authorization': authHeader,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -56,10 +61,15 @@ class GistStorage {
   async updateGist(data) {
     if (!this.token || !this.gistId) throw new Error('GitHub token and gist ID required');
 
+    // Support both classic (ghp_) and fine-grained (github_pat_) tokens
+    const authHeader = this.token.startsWith('github_pat_')
+      ? `Bearer ${this.token}`
+      : `token ${this.token}`;
+
     const response = await fetch(`https://api.github.com/gists/${this.gistId}`, {
       method: 'PATCH',
       headers: {
-        'Authorization': `token ${this.token}`,
+        'Authorization': authHeader,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -87,8 +97,13 @@ class GistStorage {
   async loadGist() {
     if (!this.gistId) throw new Error('No gist ID found');
 
+    // Support both classic (ghp_) and fine-grained (github_pat_) tokens
+    const authHeader = this.token && this.token.startsWith('github_pat_')
+      ? `Bearer ${this.token}`
+      : `token ${this.token}`;
+
     const response = await fetch(`https://api.github.com/gists/${this.gistId}`, {
-      headers: this.token ? { 'Authorization': `token ${this.token}` } : {}
+      headers: this.token ? { 'Authorization': authHeader } : {}
     });
 
     if (!response.ok) {
