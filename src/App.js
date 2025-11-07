@@ -1,6 +1,24 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Plus, Trash2, Edit2, Check, X, Download, Upload, FolderPlus, ExternalLink, CheckCircle, Circle, ChevronDown, ChevronRight, Cloud } from 'lucide-react';
+import { Plus, Trash2, Edit2, Check, X, Download, Upload, ExternalLink, CheckCircle, Circle, ChevronDown, ChevronRight, Cloud, GripVertical } from 'lucide-react';
 import GistStorage from './gistStorage';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 const STORAGE_KEYS = {
   CATEGORIES: 'leetcode-tracker',
@@ -8,6 +26,226 @@ const STORAGE_KEYS = {
 };
 
 const INITIAL_PROBLEM = { categoryId: null, title: '', number: '', difficulty: 'Medium', notes: '' };
+
+// Sortable Problem Component
+function SortableProblem({
+  problem,
+  category,
+  editingProblem,
+  setEditingProblem,
+  updateProblem,
+  deleteProblem,
+  toggleSolved,
+  swipedProblem,
+  handleTouchStart,
+  handleTouchMove,
+  handleTouchEnd,
+  clearSwipe,
+  getLeetCodeUrl,
+  getDifficultyColor,
+  isMobileDevice
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: `${category.id}-${problem.id}` });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`border border-gray-200 rounded-lg p-3 md:p-4 hover:shadow-md transition-shadow ${isDragging ? 'z-50' : ''}`}
+    >
+      {editingProblem?.id === problem.id && editingProblem?.categoryId === category.id ? (
+        <div>
+          <div className="grid grid-cols-1 gap-3 mb-3">
+            <input
+              type="text"
+              defaultValue={problem.title}
+              onChange={(e) => setEditingProblem({ ...editingProblem, title: e.target.value })}
+              className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <input
+                type="text"
+                defaultValue={problem.number}
+                onChange={(e) => setEditingProblem({ ...editingProblem, number: e.target.value })}
+                className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <select
+                defaultValue={problem.difficulty}
+                onChange={(e) => setEditingProblem({ ...editingProblem, difficulty: e.target.value })}
+                className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option>Easy</option>
+                <option>Medium</option>
+                <option>Hard</option>
+              </select>
+            </div>
+            <textarea
+              defaultValue={problem.notes}
+              onChange={(e) => setEditingProblem({ ...editingProblem, notes: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              rows="2"
+            />
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <button
+              onClick={() => updateProblem(category.id, problem.id, editingProblem)}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              <Check size={16} />
+              Save
+            </button>
+            <button
+              onClick={() => setEditingProblem(null)}
+              className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div
+          className="relative"
+          onTouchStart={(e) => handleTouchStart(e, problem.id)}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={(e) => handleTouchEnd(e, problem.id)}
+          onClick={() => {
+            if (isMobileDevice() && swipedProblem === problem.id) {
+              clearSwipe();
+            }
+          }}
+        >
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+            <div className="flex items-start gap-3 flex-1 min-w-0">
+              {/* Drag handle */}
+              <button
+                {...attributes}
+                {...listeners}
+                className="mt-1 flex-shrink-0 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing"
+                title="Drag to reorder"
+              >
+                <GripVertical size={16} />
+              </button>
+
+              <button
+                onClick={() => toggleSolved(category.id, problem.id)}
+                className="mt-1 flex-shrink-0"
+              >
+                {problem.solved ? (
+                  <CheckCircle size={20} className="text-green-600" />
+                ) : (
+                  <Circle size={20} className="text-gray-400" />
+                )}
+              </button>
+              <div className="flex-1 min-w-0">
+                <a
+                  href={getLeetCodeUrl(problem.number, problem.title)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block group cursor-pointer"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    {problem.number && <span className="text-sm font-mono text-gray-500 flex-shrink-0">#{problem.number}</span>}
+                    <h3 className={`text-base md:text-lg font-semibold min-w-0 ${problem.solved ? 'text-gray-500 line-through' : 'text-gray-800'} group-hover:text-blue-600 transition-colors break-words`}>
+                      {problem.title}
+                    </h3>
+                    <ExternalLink size={14} className="text-gray-400 group-hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                  </div>
+                  <div className="mb-2">
+                    <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${getDifficultyColor(problem.difficulty)}`}>
+                      {problem.difficulty}
+                    </span>
+                  </div>
+                </a>
+                {problem.notes && <p className="text-sm text-gray-600 mb-2 break-words">{problem.notes}</p>}
+                <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs text-gray-400">
+                  <p className="flex-shrink-0">Added: {new Date(problem.solvedAt).toLocaleDateString()}</p>
+                  {(problem.solvedTimes || 0) > 0 && (
+                    <p className="text-green-600 font-medium flex-shrink-0">
+                      Solved {problem.solvedTimes} time{problem.solvedTimes !== 1 ? 's' : ''}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Desktop buttons - always visible */}
+            <div className="hidden md:flex gap-2 flex-shrink-0 justify-end sm:justify-start">
+              <button
+                onClick={() => setEditingProblem({ ...problem, categoryId: category.id })}
+                className="text-blue-600 hover:text-blue-800 p-1"
+              >
+                <Edit2 size={16} />
+              </button>
+              <button
+                onClick={() => deleteProblem(category.id, problem.id)}
+                className="text-red-600 hover:text-red-800 p-1"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile swipe actions - show when swiped */}
+          {isMobileDevice() && swipedProblem === problem.id && (
+            <div className="absolute right-0 top-0 bottom-0 flex items-center gap-2 bg-white border-l border-gray-200 px-3 shadow-lg md:hidden">
+              <button
+                onClick={() => {
+                  setEditingProblem({ ...problem, categoryId: category.id });
+                  clearSwipe();
+                }}
+                className="flex items-center justify-center w-12 h-12 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 active:bg-blue-300 transition-colors"
+              >
+                <Edit2 size={18} />
+              </button>
+              <button
+                onClick={() => {
+                  deleteProblem(category.id, problem.id);
+                  clearSwipe();
+                }}
+                className="flex items-center justify-center w-12 h-12 bg-red-100 text-red-600 rounded-full hover:bg-red-200 active:bg-red-300 transition-colors"
+              >
+                <Trash2 size={18} />
+              </button>
+            </div>
+          )}
+
+          {/* Mobile fallback buttons - show when not swiped */}
+          {isMobileDevice() && swipedProblem !== problem.id && (
+            <div className="flex gap-2 justify-start mt-3 md:hidden">
+              <button
+                onClick={() => setEditingProblem({ ...problem, categoryId: category.id })}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium active:bg-blue-200 transition-colors"
+              >
+                <Edit2 size={14} />
+                Edit
+              </button>
+              <button
+                onClick={() => deleteProblem(category.id, problem.id)}
+                className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium active:bg-red-200 transition-colors"
+              >
+                <Trash2 size={14} />
+                Delete
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const useLocalStorage = (key, initialValue) => {
   const [value, setValue] = useState(() => {
@@ -84,9 +322,22 @@ export default function LeetCodeTracker() {
   const [collapsedCategories, setCollapsedCategories] = useLocalStorage(STORAGE_KEYS.COLLAPSED, []);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryDescription, setNewCategoryDescription] = useState('');
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [editingProblem, setEditingProblem] = useState(null);
   const [newProblem, setNewProblem] = useState(INITIAL_PROBLEM);
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 8px of movement before drag starts
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Swipe gesture hook
   const { swipedProblem, handleTouchStart, handleTouchMove, handleTouchEnd, clearSwipe } = useSwipeGesture();
@@ -108,6 +359,13 @@ export default function LeetCodeTracker() {
     }]);
     setNewCategoryName('');
     setNewCategoryDescription('');
+    setIsAddingCategory(false);
+  };
+
+  const cancelAddCategory = () => {
+    setNewCategoryName('');
+    setNewCategoryDescription('');
+    setIsAddingCategory(false);
   };
 
   const deleteCategory = (id) => {
@@ -238,6 +496,38 @@ export default function LeetCodeTracker() {
     setCollapsedCategories(newCollapsed);
   };
 
+  // Handle drag end for reordering problems
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    // Find which category contains the dragged item
+    const activeProblemData = active.id.split('-');
+    const categoryId = parseInt(activeProblemData[0]);
+    const activeId = parseInt(activeProblemData[1]);
+
+    const overProblemData = over.id.split('-');
+    const overId = parseInt(overProblemData[1]);
+
+    setCategories(prevCategories => {
+      return prevCategories.map(category => {
+        if (category.id === categoryId) {
+          const oldIndex = category.problems.findIndex(p => p.id === activeId);
+          const newIndex = category.problems.findIndex(p => p.id === overId);
+
+          if (oldIndex !== -1 && newIndex !== -1) {
+            const newProblems = arrayMove(category.problems, oldIndex, newIndex);
+            return { ...category, problems: newProblems };
+          }
+        }
+        return category;
+      });
+    });
+  };
+
   // GitHub Gist functions
   const connectGitHub = () => {
     if (!githubToken.trim()) {
@@ -366,29 +656,63 @@ export default function LeetCodeTracker() {
           </div>
 
           <div className="space-y-3 mb-4 md:mb-6">
-            <div className="flex flex-col sm:flex-row gap-2">
-              <input
-                type="text"
-                value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && addCategory()}
-                placeholder="New category name"
-                className="flex-1 px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
-              />
-              <button onClick={addCategory} className="flex items-center justify-center gap-2 px-3 md:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm whitespace-nowrap">
-                <FolderPlus size={16} />
-                <span className="hidden sm:inline">Add Category</span>
-                <span className="sm:hidden">Add</span>
+            {!isAddingCategory ? (
+              <button
+                onClick={() => setIsAddingCategory(true)}
+                className="flex items-center gap-3 px-4 py-3 bg-white rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50 transition-colors duration-200 w-full text-left group"
+              >
+                <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full group-hover:bg-blue-200">
+                  <Plus size={18} className="text-blue-600" />
+                </div>
+                <div>
+                  <div className="text-gray-700 font-medium">Add New Category</div>
+                  <div className="text-gray-500 text-sm">Create a new category to organize your problems</div>
+                </div>
               </button>
-            </div>
-            <input
-              type="text"
-              value={newCategoryDescription}
-              onChange={(e) => setNewCategoryDescription(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && addCategory()}
-              placeholder="Category description (optional)"
-              className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
-            />
+            ) : (
+              <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full">
+                    <Plus size={18} className="text-blue-600" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900">New Category</h3>
+                </div>
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && addCategory()}
+                    placeholder="Category name"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    autoFocus
+                  />
+                  <input
+                    type="text"
+                    value={newCategoryDescription}
+                    onChange={(e) => setNewCategoryDescription(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && addCategory()}
+                    placeholder="Description (optional)"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                  <div className="flex gap-2 justify-end">
+                    <button
+                      onClick={cancelAddCategory}
+                      className="px-3 py-2 text-gray-600 hover:text-gray-800 text-sm font-medium"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={addCategory}
+                      disabled={!newCategoryName.trim()}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                    >
+                      Create Category
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -525,168 +849,39 @@ export default function LeetCodeTracker() {
                     </button>
                   )}
 
-                  <div className="space-y-3">
-                    {category.problems.map(problem => (
-                      <div key={problem.id} className="border border-gray-200 rounded-lg p-3 md:p-4 hover:shadow-md transition-shadow">
-                        {editingProblem?.id === problem.id && editingProblem?.categoryId === category.id ? (
-                          <div>
-                            <div className="grid grid-cols-1 gap-3 mb-3">
-                              <input
-                                type="text"
-                                defaultValue={problem.title}
-                                onChange={(e) => setEditingProblem({ ...editingProblem, title: e.target.value })}
-                                className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              />
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <input
-                                  type="text"
-                                  defaultValue={problem.number}
-                                  onChange={(e) => setEditingProblem({ ...editingProblem, number: e.target.value })}
-                                  className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                                <select
-                                  defaultValue={problem.difficulty}
-                                  onChange={(e) => setEditingProblem({ ...editingProblem, difficulty: e.target.value })}
-                                  className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                >
-                                  <option>Easy</option>
-                                  <option>Medium</option>
-                                  <option>Hard</option>
-                                </select>
-                              </div>
-                              <textarea
-                                defaultValue={problem.notes}
-                                onChange={(e) => setEditingProblem({ ...editingProblem, notes: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                rows="2"
-                              />
-                            </div>
-                            <div className="flex flex-col sm:flex-row gap-2">
-                              <button onClick={() => updateProblem(category.id, problem.id, editingProblem)} className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                                <Check size={16} />
-                                Save
-                              </button>
-                              <button onClick={() => setEditingProblem(null)} className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">
-                                Cancel
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div
-                            className="relative"
-                            onTouchStart={(e) => handleTouchStart(e, problem.id)}
-                            onTouchMove={handleTouchMove}
-                            onTouchEnd={(e) => handleTouchEnd(e, problem.id)}
-                            onClick={() => {
-                              // Clear swipe when clicking elsewhere on mobile
-                              if (isMobileDevice() && swipedProblem === problem.id) {
-                                clearSwipe();
-                              }
-                            }}
-                          >
-                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
-                              <div className="flex items-start gap-3 flex-1 min-w-0">
-                                <button
-                                  onClick={() => toggleSolved(category.id, problem.id)}
-                                  className="mt-1 flex-shrink-0"
-                                >
-                                  {problem.solved ? (
-                                    <CheckCircle size={20} className="text-green-600" />
-                                  ) : (
-                                    <Circle size={20} className="text-gray-400" />
-                                  )}
-                                </button>
-                                <div className="flex-1 min-w-0">
-                                  <a
-                                    href={getLeetCodeUrl(problem.number, problem.title)}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="block group cursor-pointer"
-                                  >
-                                    <div className="flex items-center gap-2 mb-1">
-                                      {problem.number && <span className="text-sm font-mono text-gray-500 flex-shrink-0">#{problem.number}</span>}
-                                      <h3 className={`text-base md:text-lg font-semibold min-w-0 ${problem.solved ? 'text-gray-500 line-through' : 'text-gray-800'} group-hover:text-blue-600 transition-colors break-words`}>
-                                        {problem.title}
-                                      </h3>
-                                      <ExternalLink size={14} className="text-gray-400 group-hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
-                                    </div>
-                                    <div className="mb-2">
-                                      <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${getDifficultyColor(problem.difficulty)}`}>
-                                        {problem.difficulty}
-                                      </span>
-                                    </div>
-                                  </a>
-                                  {problem.notes && <p className="text-sm text-gray-600 mb-2 break-words">{problem.notes}</p>}
-                                  <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs text-gray-400">
-                                    <p className="flex-shrink-0">Added: {new Date(problem.solvedAt).toLocaleDateString()}</p>
-                                    {(problem.solvedTimes || 0) > 0 && (
-                                      <p className="text-green-600 font-medium flex-shrink-0">
-                                        Solved {problem.solvedTimes} time{problem.solvedTimes !== 1 ? 's' : ''}
-                                      </p>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Desktop buttons - always visible */}
-                              <div className="hidden md:flex gap-2 flex-shrink-0 justify-end sm:justify-start">
-                                <button onClick={() => setEditingProblem({ ...problem, categoryId: category.id })} className="text-blue-600 hover:text-blue-800 p-1">
-                                  <Edit2 size={16} />
-                                </button>
-                                <button onClick={() => deleteProblem(category.id, problem.id)} className="text-red-600 hover:text-red-800 p-1">
-                                  <Trash2 size={16} />
-                                </button>
-                              </div>
-                            </div>
-
-                            {/* Mobile swipe actions - show when swiped */}
-                            {isMobileDevice() && swipedProblem === problem.id && (
-                              <div className="absolute right-0 top-0 bottom-0 flex items-center gap-2 bg-white border-l border-gray-200 px-3 shadow-lg md:hidden">
-                                <button
-                                  onClick={() => {
-                                    setEditingProblem({ ...problem, categoryId: category.id });
-                                    clearSwipe();
-                                  }}
-                                  className="flex items-center justify-center w-12 h-12 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 active:bg-blue-300 transition-colors"
-                                >
-                                  <Edit2 size={18} />
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    deleteProblem(category.id, problem.id);
-                                    clearSwipe();
-                                  }}
-                                  className="flex items-center justify-center w-12 h-12 bg-red-100 text-red-600 rounded-full hover:bg-red-200 active:bg-red-300 transition-colors"
-                                >
-                                  <Trash2 size={18} />
-                                </button>
-                              </div>
-                            )}
-
-                            {/* Mobile fallback buttons - show when not swiped */}
-                            {isMobileDevice() && swipedProblem !== problem.id && (
-                              <div className="flex gap-2 justify-start mt-3 md:hidden">
-                                <button
-                                  onClick={() => setEditingProblem({ ...problem, categoryId: category.id })}
-                                  className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium active:bg-blue-200 transition-colors"
-                                >
-                                  <Edit2 size={14} />
-                                  Edit
-                                </button>
-                                <button
-                                  onClick={() => deleteProblem(category.id, problem.id)}
-                                  className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium active:bg-red-200 transition-colors"
-                                >
-                                  <Trash2 size={14} />
-                                  Delete
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <div className="space-y-3">
+                      <SortableContext
+                        items={category.problems.map(p => `${category.id}-${p.id}`)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        {category.problems.map(problem => (
+                          <SortableProblem
+                            key={`${category.id}-${problem.id}`}
+                            problem={problem}
+                            category={category}
+                            editingProblem={editingProblem}
+                            setEditingProblem={setEditingProblem}
+                            updateProblem={updateProblem}
+                            deleteProblem={deleteProblem}
+                            toggleSolved={toggleSolved}
+                            swipedProblem={swipedProblem}
+                            handleTouchStart={handleTouchStart}
+                            handleTouchMove={handleTouchMove}
+                            handleTouchEnd={handleTouchEnd}
+                            clearSwipe={clearSwipe}
+                            getLeetCodeUrl={getLeetCodeUrl}
+                            getDifficultyColor={getDifficultyColor}
+                            isMobileDevice={isMobileDevice}
+                          />
+                        ))}
+                      </SortableContext>
+                    </div>
+                  </DndContext>
                 </>
               )}
             </div>
