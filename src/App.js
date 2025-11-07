@@ -85,19 +85,6 @@ export default function LeetCodeTracker() {
               />
             </div>
           </div>
-
-          <div className="space-y-3 mb-4 md:mb-6">
-            <AddCategoryForm
-              isAddingCategory={trackerState.isAddingCategory}
-              setIsAddingCategory={trackerState.setIsAddingCategory}
-              newCategoryName={trackerState.newCategoryName}
-              setNewCategoryName={trackerState.setNewCategoryName}
-              newCategoryDescription={trackerState.newCategoryDescription}
-              setNewCategoryDescription={trackerState.setNewCategoryDescription}
-              addCategory={trackerState.addCategory}
-              cancelAddCategory={trackerState.cancelAddCategory}
-            />
-          </div>
         </div>
 
         {trackerState.categories.length === 0 && (
@@ -151,6 +138,19 @@ export default function LeetCodeTracker() {
             })}
           </SortableContext>
         </DndContext>
+
+        <div className="mt-6">
+          <AddCategoryForm
+            isAddingCategory={trackerState.isAddingCategory}
+            setIsAddingCategory={trackerState.setIsAddingCategory}
+            newCategoryName={trackerState.newCategoryName}
+            setNewCategoryName={trackerState.setNewCategoryName}
+            newCategoryDescription={trackerState.newCategoryDescription}
+            setNewCategoryDescription={trackerState.setNewCategoryDescription}
+            addCategory={trackerState.addCategory}
+            cancelAddCategory={trackerState.cancelAddCategory}
+          />
+        </div>
       </div>
     </div>
   );
