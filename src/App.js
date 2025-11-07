@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { Plus, Trash2, Edit2, Check, X, Download, Upload, ExternalLink, CheckCircle, Circle, ChevronDown, ChevronRight, Cloud, GripVertical } from 'lucide-react';
 import GistStorage from './gistStorage';
 import {
