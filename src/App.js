@@ -7,6 +7,8 @@ import SortableCategory from './components/SortableCategory';
 import GitHubSyncPanel from './components/GitHubSyncPanel';
 import ImportExportButtons from './components/ImportExportButtons';
 import AddCategoryForm from './components/AddCategoryForm';
+import ScrollButton from './components/ScrollButton';
+import RandomProblemCard from './components/RandomProblemCard';
 
 // Hooks
 import { useLeetCodeTracker } from './hooks/useLeetCodeTracker';
@@ -87,6 +89,13 @@ export default function LeetCodeTracker() {
           </div>
         </div>
 
+        {/* Random Problem Card */}
+        <RandomProblemCard
+          categories={trackerState.categories}
+          getLeetCodeUrl={getLeetCodeUrl}
+          getDifficultyColor={getDifficultyColor}
+        />
+
         {trackerState.categories.length === 0 && (
           <div className="bg-white rounded-lg shadow p-4 md:p-8 text-center text-gray-500">
             No categories yet. Add one to get started!
@@ -152,6 +161,9 @@ export default function LeetCodeTracker() {
           />
         </div>
       </div>
+
+      {/* Scroll to top/bottom button */}
+      <ScrollButton />
     </div>
   );
 }
