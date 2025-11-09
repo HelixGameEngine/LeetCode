@@ -65,6 +65,7 @@ const SortableCategory = ({
 
   return (
     <div
+      id={`category-${category.id}`}
       ref={setNodeRef}
       style={style}
       className={`bg-white rounded-lg shadow-lg p-3 sm:p-4 md:p-6 mb-3 md:mb-6 ${isDragging ? 'z-50' : ''}`}
