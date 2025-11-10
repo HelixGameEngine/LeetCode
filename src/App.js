@@ -78,10 +78,10 @@ export default function LeetCodeTracker() {
         </div>
 
         {/* Main Content */}
-        <div className={`flex-1 ${isMobileDevice() ? 'p-2 sm:p-4' : 'p-4 pr-8'}`}>
+        <div className={`flex-1 ${isMobileDevice() ? 'p-3 sm:p-4' : 'p-4 pr-8'} ${isMobileDevice() ? 'pt-20' : ''}`}>
           <div className={`${isMobileDevice() ? 'max-w-full' : 'max-w-5xl'} mx-auto`}>
-            <div className="bg-white rounded-lg shadow-lg p-3 sm:p-4 md:p-6 mb-3 md:mb-6">
-              <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-4 md:mb-6 gap-3">
+            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 md:p-8 mb-4 md:mb-6">
+              <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-4 md:mb-6 gap-4">
                 <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800 text-center lg:text-left">
                   LeetCode Problem Tracker
                 </h1>
@@ -99,9 +99,7 @@ export default function LeetCodeTracker() {
                   />
                 </div>
               </div>
-            </div>
-
-            {/* Random Problem Card */}
+            </div>            {/* Random Problem Card */}
             <RandomProblemCard
               categories={trackerState.categories}
               getLeetCodeUrl={getLeetCodeUrl}
