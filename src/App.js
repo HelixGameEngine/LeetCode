@@ -32,7 +32,7 @@ export default function LeetCodeTracker() {
   const swipeGesture = useSwipeGesture();
 
   // Drag and drop functionality
-  const { sensors, handleDragEnd } = useDragAndDrop(trackerState.setCategories);
+  const { sensors, handleDragEnd } = useDragAndDrop(trackerState.setCategories, trackerState.moveProblem);
 
   // GitHub sync handlers that need access to tracker data
   const handleSaveToGist = () => {
@@ -118,7 +118,10 @@ export default function LeetCodeTracker() {
               onDragEnd={handleDragEnd}
             >
               <SortableContext
-                items={trackerState.categories.map(c => c.id)}
+                items={[
+                  ...trackerState.categories.map(c => c.id),
+                  ...trackerState.categories.flatMap(c => c.problems.map(p => `${c.id}-${p.id}`))
+                ]}
                 strategy={verticalListSortingStrategy}
               >
                 {trackerState.categories.map(category => {
@@ -149,8 +152,6 @@ export default function LeetCodeTracker() {
                       getLeetCodeUrl={getLeetCodeUrl}
                       getDifficultyColor={getDifficultyColor}
                       isMobileDevice={isMobileDevice}
-                      sensors={sensors}
-                      handleDragEnd={handleDragEnd}
                       INITIAL_PROBLEM={INITIAL_PROBLEM}
                     />
                   )

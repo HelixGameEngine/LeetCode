@@ -1,8 +1,8 @@
 import React from 'react';
 import { Edit2, Trash2, X, ChevronDown, ChevronRight, GripVertical } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
+import { useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { DndContext, closestCenter } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import SortableProblem from './SortableProblem';
 import AddProblemForm from './AddProblemForm';
@@ -31,8 +31,6 @@ const SortableCategory = ({
   getLeetCodeUrl,
   getDifficultyColor,
   isMobileDevice,
-  sensors,
-  handleDragEnd,
   INITIAL_PROBLEM
 }) => {
   const {
@@ -43,6 +41,11 @@ const SortableCategory = ({
     transition,
     isDragging,
   } = useSortable({ id: category.id });
+
+  const {
+    setNodeRef: setDroppableRef,
+    isOver: isDropOver,
+  } = useDroppable({ id: category.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -70,7 +73,16 @@ const SortableCategory = ({
       style={style}
       className={`bg-white rounded-xl shadow-lg p-4 sm:p-5 md:p-6 mb-4 md:mb-6 ${isDragging ? 'z-50' : ''}`}
     >
-      <div className="flex justify-between items-start mb-4 md:mb-5">
+      <div
+        ref={setDroppableRef}
+        className={`flex justify-between items-start mb-4 md:mb-5 rounded-lg transition-all duration-200 p-2 -m-2 ${isDropOver ? 'bg-blue-50 border-2 border-dashed border-blue-400 shadow-lg' : ''
+          }`}
+      >
+        {isDropOver && (
+          <div className="absolute top-0 left-0 right-0 text-center bg-blue-100 text-blue-700 text-sm font-medium py-1 px-2 rounded-t-lg">
+            Drop problem here to move to "{category.name}"
+          </div>
+        )}
         {isEditingThisCategory ? (
           <div className="flex flex-col gap-3 flex-1">
             <input
@@ -160,39 +172,33 @@ const SortableCategory = ({
             INITIAL_PROBLEM={INITIAL_PROBLEM}
           />
 
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <div className="space-y-3">
-              <SortableContext
-                items={category.problems.map(p => `${category.id}-${p.id}`)}
-                strategy={verticalListSortingStrategy}
-              >
-                {category.problems.map(problem => (
-                  <SortableProblem
-                    key={`${category.id}-${problem.id}`}
-                    problem={problem}
-                    category={category}
-                    editingProblem={editingProblem}
-                    setEditingProblem={setEditingProblem}
-                    updateProblem={updateProblem}
-                    deleteProblem={deleteProblem}
-                    toggleSolved={toggleSolved}
-                    swipedProblem={swipedProblem}
-                    handleTouchStart={handleTouchStart}
-                    handleTouchMove={handleTouchMove}
-                    handleTouchEnd={handleTouchEnd}
-                    clearSwipe={clearSwipe}
-                    getLeetCodeUrl={getLeetCodeUrl}
-                    getDifficultyColor={getDifficultyColor}
-                    isMobileDevice={isMobileDevice}
-                  />
-                ))}
-              </SortableContext>
-            </div>
-          </DndContext>
+          <div className="space-y-3">
+            <SortableContext
+              items={category.problems.map(p => `${category.id}-${p.id}`)}
+              strategy={verticalListSortingStrategy}
+            >
+              {category.problems.map(problem => (
+                <SortableProblem
+                  key={`${category.id}-${problem.id}`}
+                  problem={problem}
+                  category={category}
+                  editingProblem={editingProblem}
+                  setEditingProblem={setEditingProblem}
+                  updateProblem={updateProblem}
+                  deleteProblem={deleteProblem}
+                  toggleSolved={toggleSolved}
+                  swipedProblem={swipedProblem}
+                  handleTouchStart={handleTouchStart}
+                  handleTouchMove={handleTouchMove}
+                  handleTouchEnd={handleTouchEnd}
+                  clearSwipe={clearSwipe}
+                  getLeetCodeUrl={getLeetCodeUrl}
+                  getDifficultyColor={getDifficultyColor}
+                  isMobileDevice={isMobileDevice}
+                />
+              ))}
+            </SortableContext>
+          </div>
         </>
       )}
     </div>

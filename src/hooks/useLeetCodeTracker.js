@@ -144,6 +144,56 @@ export const useLeetCodeTracker = () => {
     ));
   }, [setCategories]);
 
+  const moveProblem = useCallback((problemId, fromCategoryId, toCategoryId) => {
+    if (fromCategoryId === toCategoryId) return;
+
+    setCategories(prev => {
+      // Find the problem to move
+      const fromCategory = prev.find(c => c.id === fromCategoryId);
+      const toCategory = prev.find(c => c.id === toCategoryId);
+
+      if (!fromCategory || !toCategory) return prev;
+
+      const problemToMove = fromCategory.problems.find(p => p.id === problemId);
+      if (!problemToMove) return prev;
+
+      // Check for duplicate problem titles in the target category
+      const existingTitles = toCategory.problems.map(p => p.title.toLowerCase());
+      if (existingTitles.includes(problemToMove.title.toLowerCase())) {
+        alert(`A problem with the title "${problemToMove.title}" already exists in "${toCategory.name}". Cannot move problem.`);
+        return prev;
+      }
+
+      // Check for duplicate problem numbers in the target category (if number is provided)
+      if (problemToMove.number && problemToMove.number.trim()) {
+        const existingNumbers = toCategory.problems
+          .map(p => p.number)
+          .filter(num => num && num.trim());
+        if (existingNumbers.includes(problemToMove.number.trim())) {
+          alert(`A problem with the number "${problemToMove.number}" already exists in "${toCategory.name}". Cannot move problem.`);
+          return prev;
+        }
+      }
+
+      return prev.map(category => {
+        if (category.id === fromCategoryId) {
+          // Remove problem from source category
+          return {
+            ...category,
+            problems: category.problems.filter(p => p.id !== problemId)
+          };
+        } else if (category.id === toCategoryId) {
+          // Add problem to target category
+          return {
+            ...category,
+            problems: [...category.problems, problemToMove]
+          };
+        }
+        return category;
+      });
+    });
+  }, [setCategories]);
+
   return {
     // State
     categories,
@@ -172,6 +222,7 @@ export const useLeetCodeTracker = () => {
     addProblem,
     deleteProblem,
     updateProblem,
-    toggleSolved
+    toggleSolved,
+    moveProblem
   };
 };
