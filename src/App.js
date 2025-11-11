@@ -153,6 +153,8 @@ export default function LeetCodeTracker() {
                       getDifficultyColor={getDifficultyColor}
                       isMobileDevice={isMobileDevice}
                       INITIAL_PROBLEM={INITIAL_PROBLEM}
+                      categories={trackerState.categories}
+                      moveProblem={trackerState.moveProblem}
                     />
                   )
                 })}

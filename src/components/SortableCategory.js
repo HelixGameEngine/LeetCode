@@ -31,7 +31,9 @@ const SortableCategory = ({
   getLeetCodeUrl,
   getDifficultyColor,
   isMobileDevice,
-  INITIAL_PROBLEM
+  INITIAL_PROBLEM,
+  categories,
+  moveProblem
 }) => {
   const {
     attributes,
@@ -195,6 +197,8 @@ const SortableCategory = ({
                   getLeetCodeUrl={getLeetCodeUrl}
                   getDifficultyColor={getDifficultyColor}
                   isMobileDevice={isMobileDevice}
+                  categories={categories}
+                  moveProblem={moveProblem}
                 />
               ))}
             </SortableContext>
