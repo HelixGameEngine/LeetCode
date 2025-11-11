@@ -118,10 +118,7 @@ export default function LeetCodeTracker() {
               onDragEnd={handleDragEnd}
             >
               <SortableContext
-                items={[
-                  ...trackerState.categories.map(c => c.id),
-                  ...trackerState.categories.flatMap(c => c.problems.map(p => `${c.id}-${p.id}`))
-                ]}
+                items={trackerState.categories.map(c => c.id)}
                 strategy={verticalListSortingStrategy}
               >
                 {trackerState.categories.map(category => {

@@ -1,7 +1,6 @@
 import React from 'react';
 import { Edit2, Trash2, X, ChevronDown, ChevronRight, GripVertical, Plus } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
-import { useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import SortableProblem from './SortableProblem';
@@ -44,11 +43,6 @@ const SortableCategory = ({
     isDragging,
   } = useSortable({ id: category.id });
 
-  const {
-    setNodeRef: setDroppableRef,
-    isOver: isDropOver,
-  } = useDroppable({ id: category.id });
-
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -76,15 +70,8 @@ const SortableCategory = ({
       className={`bg-white rounded-xl shadow-lg mb-4 md:mb-6 ${isDragging ? 'z-50' : ''}`}
     >
       <div
-        ref={setDroppableRef}
-        className={`sticky top-0 bg-white rounded-t-xl z-40 flex justify-between items-start p-4 sm:p-5 md:p-6 transition-all duration-200 shadow-sm ${isDropOver ? 'bg-blue-50 border-2 border-dashed border-blue-400 shadow-lg' : ''
-          }`}
+        className="sticky top-0 bg-white rounded-t-xl z-40 flex justify-between items-start p-4 sm:p-5 md:p-6 transition-all duration-200 shadow-sm"
       >
-        {isDropOver && (
-          <div className="absolute top-0 left-0 right-0 text-center bg-blue-100 text-blue-700 text-sm font-medium py-1 px-2 rounded-t-lg">
-            Drop problem here to move to "{category.name}"
-          </div>
-        )}
         {isEditingThisCategory ? (
           <div className="flex flex-col gap-3 flex-1">
             <input
@@ -117,10 +104,11 @@ const SortableCategory = ({
               <button
                 {...attributes}
                 {...listeners}
-                className="mt-1 flex-shrink-0 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing"
+                className="mt-1 flex-shrink-0 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing p-1 rounded touch-manipulation"
                 title="Drag to reorder category"
+                style={{ touchAction: 'none' }}
               >
-                <GripVertical size={16} />
+                <GripVertical size={18} />
               </button>
 
               <div className="flex-1 min-w-0">

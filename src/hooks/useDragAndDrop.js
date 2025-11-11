@@ -13,7 +13,9 @@ export const useDragAndDrop = (setCategories, moveProblem) => {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8, // 8px of movement before drag starts
+        distance: 5, // Reduced distance for more responsive dragging
+        delay: 0,
+        tolerance: 5,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -43,18 +45,8 @@ export const useDragAndDrop = (setCategories, moveProblem) => {
         }
         return prevCategories;
       });
-    } else if (!activeIsCategory && overIsCategory) {
-      // Moving problem to a different category
-      const activeProblemData = active.id.split('-');
-      const fromCategoryId = parseInt(activeProblemData[0]);
-      const problemId = parseInt(activeProblemData[1]);
-      const toCategoryId = over.id;
-
-      if (moveProblem && fromCategoryId !== toCategoryId) {
-        moveProblem(problemId, fromCategoryId, toCategoryId);
-      }
     } else if (!activeIsCategory && !overIsCategory) {
-      // Reordering problems within the same category or moving between categories
+      // Only allow reordering problems within the same category
       const activeProblemData = active.id.split('-');
       const activeCategoryId = parseInt(activeProblemData[0]);
       const activeId = parseInt(activeProblemData[1]);
@@ -63,8 +55,8 @@ export const useDragAndDrop = (setCategories, moveProblem) => {
       const overCategoryId = parseInt(overProblemData[0]);
       const overId = parseInt(overProblemData[1]);
 
+      // Only proceed if problems are in the same category
       if (activeCategoryId === overCategoryId) {
-        // Reordering problems within the same category
         setCategories(prevCategories => {
           return prevCategories.map(category => {
             if (category.id === activeCategoryId) {
@@ -79,14 +71,12 @@ export const useDragAndDrop = (setCategories, moveProblem) => {
             return category;
           });
         });
-      } else {
-        // Moving problem to a different category
-        if (moveProblem) {
-          moveProblem(activeId, activeCategoryId, overCategoryId);
-        }
       }
+      // If problems are from different categories, do nothing (prevent cross-category drag)
     }
-  }, [setCategories, moveProblem]);
+    // Remove the logic for moving problems to different categories via drag
+    // This now only works through the context menu
+  }, [setCategories]);
 
   return {
     sensors,
