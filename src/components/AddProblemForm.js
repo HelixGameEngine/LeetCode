@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Check } from 'lucide-react';
+import { Check } from 'lucide-react';
 
 const AddProblemForm = ({
   newProblem,
@@ -8,20 +8,6 @@ const AddProblemForm = ({
   categoryId,
   INITIAL_PROBLEM
 }) => {
-  const isFormVisible = newProblem.categoryId === categoryId;
-
-  if (!isFormVisible) {
-    return (
-      <button
-        onClick={() => setNewProblem({ ...newProblem, categoryId })}
-        className="flex items-center gap-2 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 active:bg-gray-300 mb-4 text-sm md:text-base font-medium transition-colors min-h-[48px]"
-      >
-        <Plus size={18} />
-        Add Problem
-      </button>
-    );
-  }
-
   return (
     <div className="bg-gray-50 p-4 md:p-5 rounded-xl mb-4 md:mb-5">
       <div className="grid grid-cols-1 gap-4 mb-4">

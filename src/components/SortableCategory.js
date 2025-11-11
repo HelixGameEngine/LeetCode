@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit2, Trash2, X, ChevronDown, ChevronRight, GripVertical } from 'lucide-react';
+import { Edit2, Trash2, X, ChevronDown, ChevronRight, GripVertical, Plus } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
@@ -73,11 +73,11 @@ const SortableCategory = ({
       id={`category-${category.id}`}
       ref={setNodeRef}
       style={style}
-      className={`bg-white rounded-xl shadow-lg p-4 sm:p-5 md:p-6 mb-4 md:mb-6 ${isDragging ? 'z-50' : ''}`}
+      className={`bg-white rounded-xl shadow-lg mb-4 md:mb-6 ${isDragging ? 'z-50' : ''}`}
     >
       <div
         ref={setDroppableRef}
-        className={`flex justify-between items-start mb-4 md:mb-5 rounded-lg transition-all duration-200 p-2 -m-2 ${isDropOver ? 'bg-blue-50 border-2 border-dashed border-blue-400 shadow-lg' : ''
+        className={`sticky top-0 bg-white rounded-t-xl z-40 flex justify-between items-start p-4 sm:p-5 md:p-6 transition-all duration-200 shadow-sm ${isDropOver ? 'bg-blue-50 border-2 border-dashed border-blue-400 shadow-lg' : ''
           }`}
       >
         {isDropOver && (
@@ -146,6 +146,13 @@ const SortableCategory = ({
             </div>
             <div className="flex gap-2 flex-shrink-0 ml-2">
               <button
+                onClick={() => setNewProblem({ ...newProblem, categoryId: category.id })}
+                className="text-green-600 hover:text-green-800 hover:bg-green-50 active:bg-green-100 p-2 rounded-lg transition-all active:scale-95 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
+                title="Add new problem"
+              >
+                <Plus size={18} />
+              </button>
+              <button
                 onClick={() => setEditingCategory(category.id)}
                 className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 active:bg-blue-100 p-2 rounded-lg transition-all active:scale-95 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
                 title="Edit category"
@@ -165,14 +172,16 @@ const SortableCategory = ({
       </div>
 
       {!isCollapsed && (
-        <>
-          <AddProblemForm
-            newProblem={newProblem}
-            setNewProblem={setNewProblem}
-            addProblem={addProblem}
-            categoryId={category.id}
-            INITIAL_PROBLEM={INITIAL_PROBLEM}
-          />
+        <div className="px-4 sm:px-5 md:px-6 pb-4 sm:pb-5 md:pb-6">
+          {newProblem.categoryId === category.id && (
+            <AddProblemForm
+              newProblem={newProblem}
+              setNewProblem={setNewProblem}
+              addProblem={addProblem}
+              categoryId={category.id}
+              INITIAL_PROBLEM={INITIAL_PROBLEM}
+            />
+          )}
 
           <div className="space-y-3">
             <SortableContext
@@ -203,7 +212,7 @@ const SortableCategory = ({
               ))}
             </SortableContext>
           </div>
-        </>
+        </div>
       )}
     </div>
   );
